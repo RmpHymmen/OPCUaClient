@@ -5,12 +5,13 @@ using OPCUaClient.Exceptions;
 using OPCUaClient.Interfaces;
 using OPCUaClient.Objects;
 using System.Net;
+using ObjectIds = Opc.Ua.ObjectIds;
 
 namespace OPCUaClient
 {
-    //
-    // Zusammenfassung:
-    //     Client for OPCUA Server
+    ///
+    /// Zusammenfassung:
+    ///     Client for OPCUA Server
     public class UaClient : IUaClient
     {
         private readonly ConfiguredEndpoint _endpoint;
@@ -27,9 +28,9 @@ namespace OPCUaClient
 
         private SessionReconnectHandler? _reconnectHandler;
 
-        //
-        // Zusammenfassung:
-        //     Indicates if the instance is connected to the server.
+        ///
+        /// Zusammenfassung:
+        ///     Indicates if the instance is connected to the server.
         public bool IsConnected => _session?.Connected ?? false;
 
         private void KeepAlive(Session session, KeepAliveEventArgs e)
@@ -87,28 +88,28 @@ namespace OPCUaClient
             };
         }
 
-        //
-        // Zusammenfassung:
-        //     Create a new instance
-        //
-        // Parameter:
-        //   appName:
-        //     Name of the application
-        //
-        //   serverUrl:
-        //     Url of server
-        //
-        //   security:
-        //     Enable or disable the security
-        //
-        //   untrusted:
-        //     Accept untrusted certificates
-        //
-        //   user:
-        //     User of the OPC UA Server
-        //
-        //   password:
-        //     Password of the user
+        ///
+        /// Zusammenfassung:
+        ///     Create a new instance
+        ///
+        /// Parameter:
+        ///   appName:
+        ///     Name of the application
+        ///
+        ///   serverUrl:
+        ///     Url of server
+        ///
+        ///   security:
+        ///     Enable or disable the security
+        ///
+        ///   untrusted:
+        ///     Accept untrusted certificates
+        ///
+        ///   user:
+        ///     User of the OPC UA Server
+        ///
+        ///   password:
+        ///     Password of the user
         public UaClient(string appName, string serverUrl, bool security, bool untrusted, string user = "", string password = "")
         {
             string text = Path.Combine(Directory.GetCurrentDirectory(), "Certificates");
@@ -196,19 +197,19 @@ namespace OPCUaClient
             _endpoint = new ConfiguredEndpoint(null, description, configuration);
         }
 
-        //
-        // Zusammenfassung:
-        //     Open the connection with the OPC UA Server
-        //
-        // Parameter:
-        //   timeOut:
-        //     Timeout to try to connect with the server in seconds.
-        //
-        //   keepAlive:
-        //     Sets whether to try to connect to the server in case the connection is lost.
-        //
-        // Ausnahmen:
-        //   T:OPCUaClient.Exceptions.ServerException:
+        ///
+        /// Zusammenfassung:
+        ///     Open the connection with the OPC UA Server
+        ///
+        /// Parameter:
+        ///   timeOut:
+        ///     Timeout to try to connect with the server in seconds.
+        ///
+        ///   keepAlive:
+        ///     Sets whether to try to connect to the server in case the connection is lost.
+        ///
+        /// Ausnahmen:
+        ///   T:OPCUaClient.Exceptions.ServerException:
         public void Connect(uint timeOut = 5u, bool keepAlive = false)
         {
             Disconnect();
@@ -224,19 +225,19 @@ namespace OPCUaClient
             }
         }
 
-        //
-        // Zusammenfassung:
-        //     Open the connection with the OPC UA Server
-        //
-        // Parameter:
-        //   timeOut:
-        //     Timeout to try to connect with the server in seconds.
-        //
-        //   keepAlive:
-        //     Sets whether to try to connect to the server in case the connection is lost.
-        //
-        // Ausnahmen:
-        //   T:OPCUaClient.Exceptions.ServerException:
+        ///
+        /// Zusammenfassung:
+        ///     Open the connection with the OPC UA Server
+        ///
+        /// Parameter:
+        ///   timeOut:
+        ///     Timeout to try to connect with the server in seconds.
+        ///
+        ///   keepAlive:
+        ///     Sets whether to try to connect to the server in case the connection is lost.
+        ///
+        /// Ausnahmen:
+        ///   T:OPCUaClient.Exceptions.ServerException:
         public async Task ConnectAsync(uint timeOut = 5u, bool keepAlive = false)
         {
             await DisconnectAsync();
@@ -256,9 +257,9 @@ namespace OPCUaClient
             }
         }
 
-        //
-        // Zusammenfassung:
-        //     Close the connection with the OPC UA Server
+        ///
+        /// Zusammenfassung:
+        ///     Close the connection with the OPC UA Server
         public void Disconnect()
         {
             if (!(_session?.Connected ?? false))
@@ -279,9 +280,9 @@ namespace OPCUaClient
             _session = null;
         }
 
-        //
-        // Zusammenfassung:
-        //     Close the connection with the OPC UA Server
+        ///
+        /// Zusammenfassung:
+        ///     Close the connection with the OPC UA Server
         public Task DisconnectAsync()
         {
             if (_session?.Connected ?? false)
@@ -302,25 +303,25 @@ namespace OPCUaClient
             return Task.CompletedTask;
         }
 
-        //
-        // Zusammenfassung:
-        //     Write a value on a tag
-        //
-        // Parameter:
-        //   address:
-        //     Address of the tag
-        //
-        //   value:
-        //     Value to write
-        //
-        // Ausnahmen:
-        //   T:OPCUaClient.Exceptions.WriteException:
-        public void Write(string address, object value)
+        ///
+        /// Zusammenfassung:
+        ///     Write a value on a tag
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address of the tag
+        ///
+        ///   value:
+        ///     Value to write
+        ///
+        /// Ausnahmen:
+        ///   T:OPCUaClient.Exceptions.WriteException:
+        public void Write(string address, object value, ushort namespaceID)
         {
             WriteValueCollection writeValueCollection = new WriteValueCollection();
             WriteValue writeValue = new WriteValue
             {
-                NodeId = new NodeId(address, 2),
+                NodeId = new NodeId(address, namespaceID),
                 AttributeId = 13u,
                 Value = new DataValue()
             };
@@ -333,32 +334,32 @@ namespace OPCUaClient
             }
         }
 
-        //
-        // Zusammenfassung:
-        //     Write a value on a tag
-        //
-        // Parameter:
-        //   tag:
-        //     OPCUaClient.Objects.Tag
-        //
-        // Ausnahmen:
-        //   T:OPCUaClient.Exceptions.WriteException:
-        public void Write(Tag tag)
+        ///
+        /// Zusammenfassung:
+        ///     Write a value on a tag
+        ///
+        /// Parameter:
+        ///   tag:
+        ///     OPCUaClient.Objects.Tag
+        ///
+        /// Ausnahmen:
+        ///   T:OPCUaClient.Exceptions.WriteException:
+        public void Write(Tag tag, ushort namespaceID)
         {
-            Write(tag.Address, tag.Value);
+            Write(tag.Address, tag.Value, namespaceID);
         }
 
-        //
-        // Zusammenfassung:
-        //     Read a tag of the sepecific address
-        //
-        // Parameter:
-        //   address:
-        //     Address of the tag
-        //
-        // Rückgabewerte:
-        //     OPCUaClient.Objects.Tag
-        public Tag Read(string address)
+        ///
+        /// Zusammenfassung:
+        ///     Read a tag of the sepecific address
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address of the tag
+        ///
+        /// Rückgabewerte:
+        ///     OPCUaClient.Objects.Tag
+        public Tag Read(string address, ushort namespaceID)
         {
             Tag tag = new Tag
             {
@@ -369,7 +370,7 @@ namespace OPCUaClient
             {
                 new ReadValueId
                 {
-                    NodeId = new NodeId(address, 2),
+                    NodeId = new NodeId(address, namespaceID),
                     AttributeId = 13u
                 }
             };
@@ -379,31 +380,31 @@ namespace OPCUaClient
             return tag;
         }
 
-        //
-        // Zusammenfassung:
-        //     Read an address
-        //
-        // Parameter:
-        //   address:
-        //     Address to read.
-        //
-        // Typparameter:
-        //   TValue:
-        //     Type of value to read.
-        //
-        // Ausnahmen:
-        //   T:OPCUaClient.Exceptions.ReadException:
-        //     If the status of read action is not good Opc.Ua.StatusCodes
-        //
-        //   T:System.NotSupportedException:
-        //     If the type is not supported.
-        public TValue Read<TValue>(string address)
+        ///
+        /// Zusammenfassung:
+        ///     Read an address
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address to read.
+        ///
+        /// Typparameter:
+        ///   TValue:
+        ///     Type of value to read.
+        ///
+        /// Ausnahmen:
+        ///   T:OPCUaClient.Exceptions.ReadException:
+        ///     If the status of read action is not good Opc.Ua.StatusCodes
+        ///
+        ///   T:System.NotSupportedException:
+        ///     If the type is not supported.
+        public TValue Read<TValue>(string address, ushort namespaceID)
         {
             ReadValueIdCollection nodesToRead = new ReadValueIdCollection
             {
                 new ReadValueId
                 {
-                    NodeId = new NodeId(address, 2),
+                    NodeId = new NodeId(address, namespaceID),
                     AttributeId = 13u
                 }
             };
@@ -476,22 +477,22 @@ namespace OPCUaClient
             throw new NotSupportedException();
         }
 
-        //
-        // Zusammenfassung:
-        //     Write a lis of values
-        //
-        // Parameter:
-        //   tags:
-        //     OPCUaClient.Objects.Tag
-        //
-        // Ausnahmen:
-        //   T:OPCUaClient.Exceptions.WriteException:
-        public void Write(List<Tag> tags)
+        ///
+        /// Zusammenfassung:
+        ///     Write a lis of values
+        ///
+        /// Parameter:
+        ///   tags:
+        ///     OPCUaClient.Objects.Tag
+        ///
+        /// Ausnahmen:
+        ///   T:OPCUaClient.Exceptions.WriteException:
+        public void Write(List<Tag> tags, ushort namespaceID)
         {
             WriteValueCollection writeValueCollection = new WriteValueCollection();
             writeValueCollection.AddRange(tags.Select((Tag tag) => new WriteValue
             {
-                NodeId = new NodeId(tag.Address, 2),
+                NodeId = new NodeId(tag.Address, namespaceID),
                 AttributeId = 13u,
                 Value = new DataValue
                 {
@@ -505,23 +506,23 @@ namespace OPCUaClient
             }
         }
 
-        //
-        // Zusammenfassung:
-        //     Read a list of tags on the OPCUA Server
-        //
-        // Parameter:
-        //   address:
-        //     List of address to read.
-        //
-        // Rückgabewerte:
-        //     A list of tags OPCUaClient.Objects.Tag
-        public List<Tag> Read(List<string> address)
+        ///
+        /// Zusammenfassung:
+        ///     Read a list of tags on the OPCUA Server
+        ///
+        /// Parameter:
+        ///   address:
+        ///     List of address to read.
+        ///
+        /// Rückgabewerte:
+        ///     A list of tags OPCUaClient.Objects.Tag
+        public List<Tag> Read(List<string> address, ushort namespaceID)
         {
             List<Tag> list = new List<Tag>();
             ReadValueIdCollection readValueIdCollection = new ReadValueIdCollection();
             readValueIdCollection.AddRange(address.Select((string a) => new ReadValueId
             {
-                NodeId = new NodeId(a, 2),
+                NodeId = new NodeId(a, namespaceID),
                 AttributeId = 13u
             }));
             _session!.Read(null, 0.0, TimestampsToReturn.Both, readValueIdCollection, out var results, out var _);
@@ -538,24 +539,24 @@ namespace OPCUaClient
             return list;
         }
 
-        //
-        // Zusammenfassung:
-        //     Monitoring a tag and execute a function when the value change
-        //
-        // Parameter:
-        //   address:
-        //     Address of the tag
-        //
-        //   miliseconds:
-        //     Sets the time to check changes in the tag
-        //
-        //   monitor:
-        //     Function to execute when the value changes.
-        public void Monitoring(string address, int miliseconds, MonitoredItemNotificationEventHandler monitor)
+        ///
+        /// Zusammenfassung:
+        ///     Monitoring a tag and execute a function when the value change
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address of the tag
+        ///
+        ///   miliseconds:
+        ///     Sets the time to check changes in the tag
+        ///
+        ///   monitor:
+        ///     Function to execute when the value changes.
+        public void Monitoring(string address, int miliseconds, ushort namespaceID, MonitoredItemNotificationEventHandler monitor)
         {
             Subscription subscription = Subscription(miliseconds);
             MonitoredItem monitoredItem = new MonitoredItem();
-            monitoredItem.StartNodeId = new NodeId(address, 2);
+            monitoredItem.StartNodeId = new NodeId(address, namespaceID);
             monitoredItem.AttributeId = 13u;
             monitoredItem.Notification += monitor;
             subscription.AddItem(monitoredItem);
@@ -564,17 +565,17 @@ namespace OPCUaClient
             subscription.ApplyChanges();
         }
 
-        //
-        // Zusammenfassung:
-        //     Scan root folder of OPC UA server and get all devices
-        //
-        // Parameter:
-        //   recursive:
-        //     Indicates whether to search within device groups
-        //
-        // Rückgabewerte:
-        //     List of OPCUaClient.Objects.Device
-        public List<Device> Devices(bool recursive = false)
+        ///
+        /// Zusammenfassung:
+        ///     Scan root folder of OPC UA server and get all devices
+        ///
+        /// Parameter:
+        ///   recursive:
+        ///     Indicates whether to search within device groups
+        ///
+        /// Rückgabewerte:
+        ///     List of OPCUaClient.Objects.Device
+        public List<Device> Devices(ushort namespaceID, bool recursive = false)
         {
             Browser browser = new Browser(_session);
             browser.BrowseDirection = BrowseDirection.Forward;
@@ -590,33 +591,33 @@ namespace OPCUaClient
                                  }).ToList();
             list.ForEach(delegate (Device d)
             {
-                d.Groups = Groups(d.Address, recursive);
-                d.Tags = Tags(d.Address);
+                d.Groups = Groups(d.Address, namespaceID, recursive);
+                d.Tags = Tags(d.Address, namespaceID);
             });
             return list;
         }
 
-        //
-        // Zusammenfassung:
-        //     Scan an address and retrieve the tags and groups
-        //
-        // Parameter:
-        //   address:
-        //     Address to search
-        //
-        //   recursive:
-        //     Indicates whether to search within group groups
-        //
-        // Rückgabewerte:
-        //     List of OPCUaClient.Objects.Group
-        public List<Group> Groups(string address, bool recursive = false)
+        ///
+        /// Zusammenfassung:
+        ///     Scan an address and retrieve the tags and groups
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address to search
+        ///
+        ///   recursive:
+        ///     Indicates whether to search within group groups
+        ///
+        /// Rückgabewerte:
+        ///     List of OPCUaClient.Objects.Group
+        public List<Group> Groups(string address, ushort namespaceID, bool recursive = false)
         {
             List<Group> list = new List<Group>();
             Browser browser = new Browser(_session);
             browser.BrowseDirection = BrowseDirection.Forward;
             browser.NodeClassMask = 3;
             browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
-            ReferenceDescriptionCollection referenceDescriptionCollection = browser.Browse(new NodeId(address, 2));
+            ReferenceDescriptionCollection referenceDescriptionCollection = browser.Browse(new NodeId(address, namespaceID));
             for (int i = 0; i < referenceDescriptionCollection.Count; i++)
             {
                 ReferenceDescription referenceDescription = referenceDescriptionCollection[i];
@@ -624,8 +625,8 @@ namespace OPCUaClient
                 {
                     Group group = new Group();
                     group.Address = address + "." + referenceDescription.ToString();
-                    group.Groups = Groups(group.Address, recursive);
-                    group.Tags = Tags(group.Address);
+                    group.Groups = Groups(group.Address, namespaceID, recursive);
+                    group.Tags = Tags(group.Address, namespaceID);
                     list.Add(group);
                 }
             }
@@ -633,24 +634,24 @@ namespace OPCUaClient
             return list;
         }
 
-        //
-        // Zusammenfassung:
-        //     Scan an address and retrieve the tags.
-        //
-        // Parameter:
-        //   address:
-        //     Address to search
-        //
-        // Rückgabewerte:
-        //     List of OPCUaClient.Objects.Tag
-        public List<Tag> Tags(string address)
+        ///
+        /// Zusammenfassung:
+        ///     Scan an address and retrieve the tags.
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address to search
+        ///
+        /// Rückgabewerte:
+        ///     List of OPCUaClient.Objects.Tag
+        public List<Tag> Tags(string address, ushort namespaceID)
         {
             List<Tag> list = new List<Tag>();
             Browser browser = new Browser(_session);
             browser.BrowseDirection = BrowseDirection.Forward;
             browser.NodeClassMask = 3;
             browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
-            ReferenceDescriptionCollection referenceDescriptionCollection = browser.Browse(new NodeId(address, 2));
+            ReferenceDescriptionCollection referenceDescriptionCollection = browser.Browse(new NodeId(address, namespaceID));
             for (int i = 0; i < referenceDescriptionCollection.Count; i++)
             {
                 ReferenceDescription referenceDescription = referenceDescriptionCollection[i];
@@ -666,17 +667,17 @@ namespace OPCUaClient
             return list;
         }
 
-        //
-        // Zusammenfassung:
-        //     Scan root folder of OPC UA server and get all devices
-        //
-        // Parameter:
-        //   recursive:
-        //     Indicates whether to search within device groups
-        //
-        // Rückgabewerte:
-        //     List of OPCUaClient.Objects.Device
-        public Task<List<Device>> DevicesAsync(bool recursive = false)
+        ///
+        /// Zusammenfassung:
+        ///     Scan root folder of OPC UA server and get all devices
+        ///
+        /// Parameter:
+        ///   recursive:
+        ///     Indicates whether to search within device groups
+        ///
+        /// Rückgabewerte:
+        ///     List of OPCUaClient.Objects.Device
+        public Task<List<Device>> DevicesAsync(ushort namespaceID, bool recursive = false)
         {
             return Task.Run(delegate
             {
@@ -695,64 +696,62 @@ namespace OPCUaClient
                                      }).ToList();
                 list.ForEach(delegate (Device d)
                 {
-                    d.Groups = Groups(d.Address, recursive);
-                    d.Tags = Tags(d.Address);
+                    d.Groups = Groups(d.Address, namespaceID, recursive);
+                    d.Tags = Tags(d.Address, namespaceID);
                 });
                 return list;
             });
         }
 
-        //
-        // Zusammenfassung:
-        //     Scan an address and retrieve the tags and groups
-        //
-        // Parameter:
-        //   address:
-        //     Address to search
-        //
-        //   recursive:
-        //     Indicates whether to search within group groups
-        //
-        // Rückgabewerte:
-        //     List of OPCUaClient.Objects.Group
-        public Task<List<Group>> GroupsAsync(string address, bool recursive = false)
+        ///
+        /// Zusammenfassung:
+        ///     Scan an address and retrieve the tags and groups
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address to search
+        ///
+        ///   recursive:
+        ///     Indicates whether to search within group groups
+        ///
+        /// Rückgabewerte:
+        ///     List of OPCUaClient.Objects.Group
+        public Task<List<Group>> GroupsAsync(string address, ushort namespaceID, bool recursive = false)
         {
-            string address2 = address;
-            return Task.Run(() => Groups(address2, recursive));
+            return Task.Run(() => Groups(address, namespaceID, recursive));
         }
 
-        //
-        // Zusammenfassung:
-        //     Scan an address and retrieve the tags.
-        //
-        // Parameter:
-        //   address:
-        //     Address to search
-        //
-        // Rückgabewerte:
-        //     List of OPCUaClient.Objects.Tag
-        public Task<List<Tag>> TagsAsync(string address)
+        ///
+        /// Zusammenfassung:
+        ///     Scan an address and retrieve the tags.
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address to search
+        ///
+        /// Rückgabewerte:
+        ///     List of OPCUaClient.Objects.Tag
+        public Task<List<Tag>> TagsAsync(string address, ushort namespaceID)
         {
-            string address2 = address;
-            return Task.Run(() => Tags(address2));
+            return Task.Run(() => Tags(address, namespaceID));
         }
 
-        //
-        // Zusammenfassung:
-        //     Write a value on a tag
-        //
-        // Parameter:
-        //   address:
-        //     Address of the tag
-        //
-        //   value:
-        //     Value to write
-        public async Task<Tag> WriteAsync(string address, object value)
+        ///
+        /// Zusammenfassung:
+        ///     Write a value on a tag
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address of the tag
+        ///
+        ///   value:
+        ///     Value to write
+        public async Task<Tag> WriteAsync(string address, object value, ushort namespaceID)
         {
             WriteValueCollection writeValues = new WriteValueCollection();
             WriteValue writeValue = new WriteValue
             {
-                NodeId = new NodeId(address, 2),
+                NodeId = new NodeId(address, namespaceID),
                 AttributeId = 13u,
                 Value = new DataValue()
             };
@@ -767,31 +766,31 @@ namespace OPCUaClient
             };
         }
 
-        //
-        // Zusammenfassung:
-        //     Write a value on a tag
-        //
-        // Parameter:
-        //   tag:
-        //     OPCUaClient.Objects.Tag
-        public Task<Tag> WriteAsync(Tag tag)
+        ///
+        /// Zusammenfassung:
+        ///     Write a value on a tag
+        ///
+        /// Parameter:
+        ///   tag:
+        ///     OPCUaClient.Objects.Tag
+        public Task<Tag> WriteAsync(Tag tag, ushort namespaceID)
         {
-            return WriteAsync(tag.Address, tag.Value);
+            return WriteAsync(tag.Address, tag.Value, namespaceID);
         }
 
-        //
-        // Zusammenfassung:
-        //     Write a lis of values
-        //
-        // Parameter:
-        //   tags:
-        //     OPCUaClient.Objects.Tag
-        public async Task<List<Tag>> WriteAsync(List<Tag> tags)
+        ///
+        /// Zusammenfassung:
+        ///     Write a lis of values
+        ///
+        /// Parameter:
+        ///   tags:
+        ///     OPCUaClient.Objects.Tag
+        public async Task<List<Tag>> WriteAsync(List<Tag> tags, ushort namespaceID)
         {
             WriteValueCollection writeValues = new WriteValueCollection();
             writeValues.AddRange(tags.Select((Tag tag) => new WriteValue
             {
-                NodeId = new NodeId(tag.Address, 2),
+                NodeId = new NodeId(tag.Address, namespaceID),
                 AttributeId = 13u,
                 Value = new DataValue
                 {
@@ -807,17 +806,17 @@ namespace OPCUaClient
             return tags;
         }
 
-        //
-        // Zusammenfassung:
-        //     Read a tag of the sepecific address
-        //
-        // Parameter:
-        //   address:
-        //     Address of the tag
-        //
-        // Rückgabewerte:
-        //     OPCUaClient.Objects.Tag
-        public async Task<Tag> ReadAsync(string address)
+        ///
+        /// Zusammenfassung:
+        ///     Read a tag of the sepecific address
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address of the tag
+        ///
+        /// Rückgabewerte:
+        ///     OPCUaClient.Objects.Tag
+        public async Task<Tag> ReadAsync(string address, ushort namespaceID)
         {
             Tag tag = new Tag
             {
@@ -828,7 +827,7 @@ namespace OPCUaClient
             {
                 new ReadValueId
                 {
-                    NodeId = new NodeId(address, 2),
+                    NodeId = new NodeId(address, namespaceID),
                     AttributeId = 13u
                 }
             };
@@ -838,47 +837,46 @@ namespace OPCUaClient
             return tag;
         }
 
-        //
-        // Zusammenfassung:
-        //     Read an address
-        //
-        // Parameter:
-        //   address:
-        //     Address to read.
-        //
-        // Typparameter:
-        //   TValue:
-        //     Type of value to read.
-        //
-        // Ausnahmen:
-        //   T:OPCUaClient.Exceptions.ReadException:
-        //     If the status of read action is not good Opc.Ua.StatusCodes
-        //
-        //   T:System.NotSupportedException:
-        //     If the type is not supported.
-        public Task<TValue> ReadAsync<TValue>(string address)
+        ///
+        /// Zusammenfassung:
+        ///     Read an address
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address to read.
+        ///
+        /// Typparameter:
+        ///   TValue:
+        ///     Type of value to read.
+        ///
+        /// Ausnahmen:
+        ///   T:OPCUaClient.Exceptions.ReadException:
+        ///     If the status of read action is not good Opc.Ua.StatusCodes
+        ///
+        ///   T:System.NotSupportedException:
+        ///     If the type is not supported.
+        public Task<TValue> ReadAsync<TValue>(string address, ushort namespaceID)
         {
-            string address2 = address;
-            return Task.Run(() => Read<TValue>(address2));
+            return Task.Run(() => Read<TValue>(address, namespaceID));
         }
 
-        //
-        // Zusammenfassung:
-        //     Read a list of tags on the OPCUA Server
-        //
-        // Parameter:
-        //   address:
-        //     List of address to read.
-        //
-        // Rückgabewerte:
-        //     A list of tags OPCUaClient.Objects.Tag
-        public async Task<List<Tag>> ReadAsync(List<string> address)
+        ///
+        /// Zusammenfassung:
+        ///     Read a list of tags on the OPCUA Server
+        ///
+        /// Parameter:
+        ///   address:
+        ///     List of address to read.
+        ///
+        /// Rückgabewerte:
+        ///     A list of tags OPCUaClient.Objects.Tag
+        public async Task<List<Tag>> ReadAsync(List<string> address, ushort namespaceID)
         {
             List<Tag> tags = new List<Tag>();
             ReadValueIdCollection readValues = new ReadValueIdCollection();
             readValues.AddRange(address.Select((string a) => new ReadValueId
             {
-                NodeId = new NodeId(a, 2),
+                NodeId = new NodeId(a, namespaceID),
                 AttributeId = 13u
             }));
             ReadResponse dataValues = await _session!.ReadAsync(null, 0.0, TimestampsToReturn.Both, readValues, default(CancellationToken));

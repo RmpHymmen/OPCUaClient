@@ -1,6 +1,4 @@
-﻿using OPCUaClient;
-
-namespace Test
+﻿namespace Test
 {
     public class Server
     {
@@ -19,7 +17,7 @@ namespace Test
         {
             UaClient client = new UaClient("testingConect", "opc.tcp://localhost:52240", true, true);
             client.Connect(30);
-            var devices = client.Devices(true);
+            var devices = client.Devices(2, true);
             Assert.AreEqual(2, devices.Count);
             Assert.AreEqual(3, devices[0].Groups.Count);
             Assert.AreEqual("NexusMeter", devices[0].Name);
@@ -31,7 +29,7 @@ namespace Test
         {
             UaClient client = new UaClient("testingConect", "opc.tcp://localhost:52240", true, true);
             client.Connect(30);
-            var devices = client.Devices();
+            var devices = client.Devices(2);
 
             Assert.AreEqual(2, devices.Count);
             client.Disconnect();
@@ -42,7 +40,7 @@ namespace Test
         {
             UaClient client = new UaClient("testingConect", "opc.tcp://localhost:52240", true, true);
             client.Connect(30);
-            var groups = client.Groups("NexusMeter", false);
+            var groups = client.Groups("NexusMeter", 2, false);
 
             Assert.AreEqual(3, groups.Count);
             client.Disconnect();
@@ -55,10 +53,10 @@ namespace Test
             UaClient client = new UaClient("testingConect", "opc.tcp://localhost:52240", true, true);
             client.Connect(30);
 
-            var tags = client.Tags("NexusMeter");
+            var tags = client.Tags("NexusMeter", 2);
             Assert.AreEqual(1022, tags.Count);
 
-            tags = client.Tags("NexusMeter.Test");
+            tags = client.Tags("NexusMeter.Test", 2);
             Assert.AreEqual(6, tags.Count);
             
             client.Disconnect();
@@ -72,7 +70,7 @@ namespace Test
         {
             UaClient client = new UaClient("testingConect", "opc.tcp://localhost:52240", true, true);
             client.Connect(30);
-            var devices =  client.DevicesAsync();
+            var devices =  client.DevicesAsync(2);
 
             Assert.AreEqual(2, (await devices).Count);
             client.Disconnect();
@@ -83,7 +81,7 @@ namespace Test
         {
             UaClient client = new UaClient("testingConect", "opc.tcp://localhost:52240", true, true);
             client.Connect(30);
-            var groups = await client.GroupsAsync("NexusMeter", false);
+            var groups = await client.GroupsAsync("NexusMeter", 2, false);
 
             Assert.AreEqual(3, groups.Count);
             client.Disconnect();
@@ -95,10 +93,10 @@ namespace Test
             UaClient client = new UaClient("testingConect", "opc.tcp://localhost:52240", true, true);
             client.Connect(30);
 
-            var tags = await client.TagsAsync("NexusMeter");
+            var tags = await client.TagsAsync("NexusMeter", 2);
             Assert.AreEqual(1022, tags.Count);
 
-            tags = client.Tags("NexusMeter.Test");
+            tags = client.Tags("NexusMeter.Test", 2);
             Assert.AreEqual(6, tags.Count);
             
             client.Disconnect();

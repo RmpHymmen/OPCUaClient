@@ -63,7 +63,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Ausnahmen:
         ///   T:OPCUaClient.Exceptions.WriteException:
-        void Write(string address, object value);
+        void Write(string address, object value, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -75,7 +75,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Ausnahmen:
         ///   T:OPCUaClient.Exceptions.WriteException:
-        void Write(Tag tag);
+        void Write(Tag tag, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -87,7 +87,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     OPCUaClient.Objects.Tag
-        Tag Read(string address);
+        Tag Read(string address, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -107,7 +107,7 @@ namespace OPCUaClient.Interfaces
         ///
         ///   T:System.NotSupportedException:
         ///     If the type is not supported.
-        TValue Read<TValue>(string address);
+        TValue Read<TValue>(string address, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -119,7 +119,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Ausnahmen:
         ///   T:OPCUaClient.Exceptions.WriteException:
-        void Write(List<Tag> tags);
+        void Write(List<Tag> tags, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -131,7 +131,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     A list of tags OPCUaClient.Objects.Tag
-        List<Tag> Read(List<string> address);
+        List<Tag> Read(List<string> address, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -146,7 +146,7 @@ namespace OPCUaClient.Interfaces
         ///
         ///   monitor:
         ///     Function to execute when the value changes.
-        void Monitoring(string address, int miliseconds, MonitoredItemNotificationEventHandler monitor);
+        void Monitoring(string address, int miliseconds, ushort namespaceID, MonitoredItemNotificationEventHandler monitor);
 
         ///
         /// Zusammenfassung:
@@ -158,7 +158,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     List of OPCUaClient.Objects.Device
-        List<Device> Devices(bool recursive = false);
+        List<Device> Devices(ushort namespaceID, bool recursive = false);
 
         ///
         /// Zusammenfassung:
@@ -173,7 +173,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     List of OPCUaClient.Objects.Group
-        List<Group> Groups(string address, bool recursive = false);
+        List<Group> Groups(string address, ushort namespaceID, bool recursive = false);
 
         ///
         /// Zusammenfassung:
@@ -185,7 +185,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     List of OPCUaClient.Objects.Tag
-        List<Tag> Tags(string address);
+        List<Tag> Tags(string address, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -197,7 +197,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     List of OPCUaClient.Objects.Device
-        Task<List<Device>> DevicesAsync(bool recursive = false);
+        Task<List<Device>> DevicesAsync(ushort namespaceID, bool recursive = false);
 
         ///
         /// Zusammenfassung:
@@ -212,7 +212,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     List of OPCUaClient.Objects.Group
-        Task<List<Group>> GroupsAsync(string address, bool recursive = false);
+        Task<List<Group>> GroupsAsync(string address, ushort namespaceID, bool recursive = false);
 
         ///
         /// Zusammenfassung:
@@ -224,7 +224,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     List of OPCUaClient.Objects.Tag
-        Task<List<Tag>> TagsAsync(string address);
+        Task<List<Tag>> TagsAsync(string address, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -236,7 +236,7 @@ namespace OPCUaClient.Interfaces
         ///
         ///   value:
         ///     Value to write
-        Task<Tag> WriteAsync(string address, object value);
+        Task<Tag> WriteAsync(string address, object value, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -245,7 +245,7 @@ namespace OPCUaClient.Interfaces
         /// Parameter:
         ///   tag:
         ///     OPCUaClient.Objects.Tag
-        Task<Tag> WriteAsync(Tag tag);
+        Task<Tag> WriteAsync(Tag tag, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -254,7 +254,7 @@ namespace OPCUaClient.Interfaces
         /// Parameter:
         ///   tags:
         ///     OPCUaClient.Objects.Tag
-        Task<List<Tag>> WriteAsync(List<Tag> tags);
+        Task<List<Tag>> WriteAsync(List<Tag> tags, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -266,7 +266,7 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     OPCUaClient.Objects.Tag
-        Task<Tag> ReadAsync(string address);
+        Task<Tag> ReadAsync(string address, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -286,7 +286,7 @@ namespace OPCUaClient.Interfaces
         ///
         ///   T:System.NotSupportedException:
         ///     If the type is not supported.
-        Task<TValue> ReadAsync<TValue>(string address);
+        Task<TValue> ReadAsync<TValue>(string address, ushort namespaceID);
 
         ///
         /// Zusammenfassung:
@@ -298,6 +298,6 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     A list of tags OPCUaClient.Objects.Tag
-        Task<List<Tag>> ReadAsync(List<string> address);
+        Task<List<Tag>> ReadAsync(List<string> address, ushort namespaceID);
     }
 }
