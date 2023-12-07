@@ -331,6 +331,96 @@ namespace OPCUaClient
             tag.Code = dataValues[0].StatusCode;
             return tag;
         }
+        
+        
+        /// <summary>
+        /// Read an address
+        /// </summary>
+        /// <param name="address">
+        /// Address to read.
+        /// </param>
+        /// <typeparam name="TValue">
+        /// Type of value to read.
+        /// </typeparam>
+        /// <returns></returns>
+        /// <exception cref="ReadException">
+        /// If the status of read action is not good <see cref="StatusCodes"/>
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// If the type is not supported.
+        /// </exception>
+        public TValue Read<TValue>(String address)
+        {
+            ReadValueIdCollection readValues = new ReadValueIdCollection()
+            {
+                new ReadValueId
+                {
+                    NodeId = new NodeId(address, 2),
+                    AttributeId = Attributes.Value
+                }
+            };
+
+            this.Session.Read(null, 0, TimestampsToReturn.Both, readValues, out DataValueCollection dataValues, out DiagnosticInfoCollection diagnosticInfo);
+
+
+            if (dataValues[0].StatusCode != StatusCodes.Good)
+            {
+                throw new ReadException(dataValues[0].StatusCode.Code.ToString());
+            }
+            
+            if (typeof(TValue) == typeof(Boolean))
+            {
+                return (TValue)(object)Convert.ToBoolean(dataValues[0].Value);
+            }
+            if (typeof(TValue) == typeof(byte))
+            {
+                return (TValue)(object)Convert.ToByte(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(UInt16))
+            {
+                return (TValue)(object)Convert.ToUInt16(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(UInt32))
+            {
+                return (TValue)(object)Convert.ToUInt32(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(UInt64))
+            {
+                return (TValue)(object)Convert.ToUInt64(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(Int16))
+            {
+                return (TValue)(object)Convert.ToInt16(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(Int32))
+            {
+                return (TValue)(object)Convert.ToInt32(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(Int64))
+            {
+                return (TValue)(object)Convert.ToInt64(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(Single))
+            {
+                return (TValue)(object)Convert.ToSingle(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(Double))
+            {
+                return (TValue)(object)Convert.ToDouble(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(Decimal))
+            {
+                return (TValue)(object)Convert.ToDecimal(dataValues[0].Value);
+            }
+            else if (typeof(TValue) == typeof(String))
+            {
+                return (TValue)(object)Convert.ToString(dataValues[0].Value);
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
+        }
 
    
 
@@ -378,7 +468,6 @@ namespace OPCUaClient
         public List<Tag> Read(List<String> address)
         {
             var tags = new List<Tag>();
-            int i = 0;
             
             ReadValueIdCollection readValues = new ReadValueIdCollection();
             readValues.AddRange(address.Select(a => new ReadValueId
@@ -389,19 +478,20 @@ namespace OPCUaClient
             
             this.Session.Read(null, 0, TimestampsToReturn.Both, readValues, out DataValueCollection dataValues, out DiagnosticInfoCollection diagnosticInfo);
 
-            address.ForEach(a =>
+            for (int i = 0; i < address.Count; i++)
             {
                 tags.Add(new Tag
                 {
-                    Address = a,
+                    Address = address[i],
                     Value = dataValues[i].Value,
                     Code = dataValues[i].StatusCode
                 });
-                i++;
-            });
+            }
 
             return tags;
         }
+        
+      
 
         /// <summary>
         /// Monitoring a tag and execute a function when the value change
@@ -483,22 +573,20 @@ namespace OPCUaClient
             browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
 
             ReferenceDescriptionCollection browseResults = browser.Browse(new NodeId(address, 2));
-            foreach (var result in browseResults)
+
+            for (int i = 0; i < browseResults.Count; i++)
             {
+                var result = browseResults[i];
+                
                 if (result.NodeClass == NodeClass.Object)
                 {
-                    groups.Add(new Group
-                    {
-                        Address = address + "." + result.ToString()
-                    });
+                    var group = new Group();
+                    group.Address = address + "." + result.ToString();
+                    group.Groups = this.Groups(group.Address, recursive);
+                    group.Tags = this.Tags(group.Address);
+                    groups.Add(group);
                 }
             }
-
-            groups.ForEach(g =>
-            {
-                g.Groups = this.Groups(g.Address, recursive);
-                g.Tags = this.Tags(g.Address);
-            });
 
             return groups;
         }
@@ -523,8 +611,9 @@ namespace OPCUaClient
             browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
 
             ReferenceDescriptionCollection browseResults = browser.Browse(new NodeId(address, 2));
-            foreach (var result in browseResults)
+            for (int i = 0; i < browseResults.Count; i++)
             {
+                var result = browseResults[i];
                 if (result.NodeClass == NodeClass.Variable)
                 {
                     tags.Add(new Tag
@@ -592,34 +681,7 @@ namespace OPCUaClient
         /// </returns>
         public Task<List<Group>> GroupsAsync(String address, bool recursive = false)
         {
-            return Task.Run(() =>
-            {
-                var groups = new List<Group>();
-                Browser browser = new Browser(this.Session);
-                browser.BrowseDirection = BrowseDirection.Forward;
-                browser.NodeClassMask = (int)NodeClass.Object | (int)NodeClass.Variable;
-                browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
-
-                ReferenceDescriptionCollection browseResults = browser.Browse(new NodeId(address, 2));
-                foreach (var result in browseResults)
-                {
-                    if (result.NodeClass == NodeClass.Object)
-                    {
-                        groups.Add(new Group
-                        {
-                            Address = address + "." + result.ToString()
-                        });
-                    }
-                }
-
-                groups.ForEach(g =>
-                {
-                    g.Groups = this.Groups(g.Address, recursive);
-                    g.Tags = this.Tags(g.Address);
-                });
-
-                return groups;
-            });
+            return Task.Run(() => Groups(address, recursive));
         }
 
 
@@ -634,29 +696,7 @@ namespace OPCUaClient
         /// </returns>
         public Task<List<Tag>> TagsAsync(String address)
         {
-            return Task.Run(() =>
-            {
-
-                var tags = new List<Tag>();
-                Browser browser = new Browser(this.Session);
-                browser.BrowseDirection = BrowseDirection.Forward;
-                browser.NodeClassMask = (int)NodeClass.Object | (int)NodeClass.Variable;
-                browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
-
-                ReferenceDescriptionCollection browseResults = browser.Browse(new NodeId(address, 2));
-                foreach (var result in browseResults)
-                {
-                    if (result.NodeClass == NodeClass.Variable)
-                    {
-                        tags.Add(new Tag
-                        {
-                            Address = address + "." + result.ToString()
-                        });
-                    }
-                }
-
-                return tags;
-            });
+            return Task.Run(() => Tags(address));
         }
         
         
@@ -701,11 +741,11 @@ namespace OPCUaClient
         /// Write a value on a tag
         /// </summary>
         /// <param name="tag"> <see cref="Tag"/></param>
-        public async Task<Tag> WriteAsync(Tag tag)
+        public Task<Tag> WriteAsync(Tag tag)
         {
-            tag = await this.WriteAsync(tag.Address, tag.Value);
+            var task = this.WriteAsync(tag.Address, tag.Value);
 
-            return tag;
+            return task;
         }
         
         /// <summary>
@@ -772,6 +812,28 @@ namespace OPCUaClient
 
             return tag;
         }
+        
+         /// <summary>
+        /// Read an address
+        /// </summary>
+        /// <param name="address">
+        /// Address to read.
+        /// </param>
+        /// <typeparam name="TValue">
+        /// Type of value to read.
+        /// </typeparam>
+        /// <returns></returns>
+        /// <exception cref="ReadException">
+        /// If the status of read action is not good <see cref="StatusCodes"/>
+        /// </exception>
+        /// <exception cref="NotSupportedException">
+        /// If the type is not supported.
+        /// </exception>
+        public Task<TValue> ReadAsync<TValue>(String address)
+         {
+             return Task.Run(() => Read<TValue>(address));
+         }
+
 
         /// <summary>
         /// Read a list of tags on the OPCUA Server
@@ -785,7 +847,6 @@ namespace OPCUaClient
         public async Task<List<Tag>> ReadAsync(List<String> address)
         {
             var tags = new List<Tag>();
-            int i = 0;
 
             ReadValueIdCollection readValues = new ReadValueIdCollection();
             readValues.AddRange(address.Select(a => new ReadValueId
@@ -796,16 +857,15 @@ namespace OPCUaClient
 
             var dataValues = await this.Session.ReadAsync(null, 0, TimestampsToReturn.Both, readValues, new CancellationToken());
 
-            address.ForEach(a =>
+            for (int i = 0; i < dataValues.Results.Count; i++)
             {
                 tags.Add(new Tag
                 {
-                    Address = a,
+                    Address = address[i],
                     Value = dataValues.Results[i].Value,
                     Code = dataValues.Results[i].StatusCode
                 });
-                i++;
-            });
+            }
 
             return tags;
         }
