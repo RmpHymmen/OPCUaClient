@@ -298,6 +298,6 @@ namespace OPCUaClient.Interfaces
         ///
         /// Rückgabewerte:
         ///     A list of tags OPCUaClient.Objects.Tag
-        Task<List<Tag>> ReadAsync(List<string> address, ushort namespaceID);
+        Task<List<Tag>> ReadAsync(List<(string, ushort)> address);
     }
 }

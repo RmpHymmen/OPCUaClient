@@ -47,7 +47,7 @@ namespace OPCUaClient
                     if (_reconnectHandler == null)
                     {
                         _reconnectHandler = new SessionReconnectHandler(reconnectAbort: true);
-                        _reconnectHandler!.BeginReconnect(_session, 10000, Reconnect);
+                        _reconnectHandler!.BeginReconnect(_session, ReconnectPeriod, Reconnect);
                     }
                 }
             }
@@ -554,11 +554,29 @@ namespace OPCUaClient
         ///     Function to execute when the value changes.
         public void Monitoring(string address, int miliseconds, ushort namespaceID, MonitoredItemNotificationEventHandler monitor)
         {
+            Monitoring(address, miliseconds, namespaceID, monitor, null);
+        }
+        ///
+        /// Zusammenfassung:
+        ///     Monitoring a tag and execute a function when the value change
+        ///
+        /// Parameter:
+        ///   address:
+        ///     Address of the tag
+        ///
+        ///   miliseconds:
+        ///     Sets the time to check changes in the tag
+        ///
+        ///   monitor:
+        ///     Function to execute when the value changes.
+        public void Monitoring(string address, int miliseconds, ushort namespaceID, MonitoredItemNotificationEventHandler monitor, object myObject)
+        {
             Subscription subscription = Subscription(miliseconds);
-            MonitoredItem monitoredItem = new MonitoredItem();
+            CustomMonitoredItem monitoredItem = new CustomMonitoredItem();
             monitoredItem.StartNodeId = new NodeId(address, namespaceID);
             monitoredItem.AttributeId = 13u;
             monitoredItem.Notification += monitor;
+            monitoredItem.MyObject = myObject;
             subscription.AddItem(monitoredItem);
             _session!.AddSubscription(subscription);
             subscription.Create();
@@ -577,24 +595,26 @@ namespace OPCUaClient
         ///     List of OPCUaClient.Objects.Device
         public List<Device> Devices(ushort namespaceID, bool recursive = false)
         {
-            Browser browser = new Browser(_session);
+            var browser = new Browser(_session);
             browser.BrowseDirection = BrowseDirection.Forward;
             browser.NodeClassMask = 3;
             browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
             ReferenceDescriptionCollection source = browser.Browse(ObjectIds.ObjectsFolder);
-            List<Device> list = (from d in source
-                                 where d.ToString() != "Server"
-                                 select d into b
-                                 select new Device
-                                 {
-                                     Address = b.ToString()
-                                 }).ToList();
-            list.ForEach(delegate (Device d)
+            var list = (from d in source
+                        where d.ToString() != "Server"
+                        select d into b
+                        select new Device
+                        {
+                            Address = b.ToString()
+                        }).ToList();
+
+            foreach (var ele in list)
             {
-                d.Groups = Groups(d.Address, namespaceID, recursive);
-                d.Tags = Tags(d.Address, namespaceID);
-            });
-            return list;
+                ele.Groups = Groups(ele.Address, namespaceID, recursive);
+                ele.Tags = Tags(ele.Address, namespaceID);
+            }
+
+            return list.Where(ele => ele.Tags.Count() > 0 || ele.Groups.Count() > 0).ToList();
         }
 
         ///
@@ -617,18 +637,25 @@ namespace OPCUaClient
             browser.BrowseDirection = BrowseDirection.Forward;
             browser.NodeClassMask = 3;
             browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
-            ReferenceDescriptionCollection referenceDescriptionCollection = browser.Browse(new NodeId(address, namespaceID));
-            for (int i = 0; i < referenceDescriptionCollection.Count; i++)
+            try
             {
-                ReferenceDescription referenceDescription = referenceDescriptionCollection[i];
-                if (referenceDescription.NodeClass == NodeClass.Object)
+                ReferenceDescriptionCollection referenceDescriptionCollection = browser.Browse(new NodeId(address, namespaceID));
+                for (int i = 0; i < referenceDescriptionCollection.Count; i++)
                 {
-                    Group group = new Group();
-                    group.Address = address + "." + referenceDescription.ToString();
-                    group.Groups = Groups(group.Address, namespaceID, recursive);
-                    group.Tags = Tags(group.Address, namespaceID);
-                    list.Add(group);
+                    ReferenceDescription referenceDescription = referenceDescriptionCollection[i];
+                    if (referenceDescription.NodeClass == NodeClass.Object)
+                    {
+                        Group group = new Group();
+                        group.Address = address + "." + referenceDescription.ToString();
+                        group.Groups = Groups(group.Address, namespaceID, recursive);
+                        group.Tags = Tags(group.Address, namespaceID);
+                        list.Add(group);
+                    }
                 }
+            }
+            catch
+            {
+                return list;
             }
 
             return list;
@@ -651,17 +678,24 @@ namespace OPCUaClient
             browser.BrowseDirection = BrowseDirection.Forward;
             browser.NodeClassMask = 3;
             browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
-            ReferenceDescriptionCollection referenceDescriptionCollection = browser.Browse(new NodeId(address, namespaceID));
-            for (int i = 0; i < referenceDescriptionCollection.Count; i++)
+            try
             {
-                ReferenceDescription referenceDescription = referenceDescriptionCollection[i];
-                if (referenceDescription.NodeClass == NodeClass.Variable)
+                ReferenceDescriptionCollection referenceDescriptionCollection = browser.Browse(new NodeId(address, namespaceID));
+                for (int i = 0; i < referenceDescriptionCollection.Count; i++)
                 {
-                    list.Add(new Tag
+                    ReferenceDescription referenceDescription = referenceDescriptionCollection[i];
+                    if (referenceDescription.NodeClass == NodeClass.Variable)
                     {
-                        Address = address + "." + referenceDescription.ToString()
-                    });
+                        list.Add(new Tag
+                        {
+                            Address = address + "." + referenceDescription.ToString()
+                        });
+                    }
                 }
+            }
+            catch
+            {
+                return list;
             }
 
             return list;
@@ -677,30 +711,9 @@ namespace OPCUaClient
         ///
         /// Rückgabewerte:
         ///     List of OPCUaClient.Objects.Device
-        public Task<List<Device>> DevicesAsync(ushort namespaceID, bool recursive = false)
+        public async Task<List<Device>> DevicesAsync(ushort namespaceID, bool recursive = false)
         {
-            return Task.Run(delegate
-            {
-                ReferenceDescriptionCollection source = new Browser(_session)
-                {
-                    BrowseDirection = BrowseDirection.Forward,
-                    NodeClassMask = 3,
-                    ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences
-                }.Browse(ObjectIds.ObjectsFolder);
-                List<Device> list = (from d in source
-                                     where d.ToString() != "Server"
-                                     select d into b
-                                     select new Device
-                                     {
-                                         Address = b.ToString()
-                                     }).ToList();
-                list.ForEach(delegate (Device d)
-                {
-                    d.Groups = Groups(d.Address, namespaceID, recursive);
-                    d.Tags = Tags(d.Address, namespaceID);
-                });
-                return list;
-            });
+            return await Task.Run(() => Devices(namespaceID, recursive));
         }
 
         ///
@@ -716,9 +729,9 @@ namespace OPCUaClient
         ///
         /// Rückgabewerte:
         ///     List of OPCUaClient.Objects.Group
-        public Task<List<Group>> GroupsAsync(string address, ushort namespaceID, bool recursive = false)
+        public async Task<List<Group>> GroupsAsync(string address, ushort namespaceID, bool recursive = false)
         {
-            return Task.Run(() => Groups(address, namespaceID, recursive));
+            return await Task.Run(() => Groups(address, namespaceID, recursive));
         }
 
         ///
@@ -731,9 +744,9 @@ namespace OPCUaClient
         ///
         /// Rückgabewerte:
         ///     List of OPCUaClient.Objects.Tag
-        public Task<List<Tag>> TagsAsync(string address, ushort namespaceID)
+        public async Task<List<Tag>> TagsAsync(string address, ushort namespaceID)
         {
-            return Task.Run(() => Tags(address, namespaceID));
+            return await Task.Run(() => Tags(address, namespaceID));
         }
 
         ///
@@ -773,9 +786,9 @@ namespace OPCUaClient
         /// Parameter:
         ///   tag:
         ///     OPCUaClient.Objects.Tag
-        public Task<Tag> WriteAsync(Tag tag, ushort namespaceID)
+        public async Task<Tag> WriteAsync(Tag tag, ushort namespaceID)
         {
-            return WriteAsync(tag.Address, tag.Value, namespaceID);
+            return await WriteAsync(tag.Address, tag.Value, namespaceID);
         }
 
         ///
@@ -870,13 +883,13 @@ namespace OPCUaClient
         ///
         /// Rückgabewerte:
         ///     A list of tags OPCUaClient.Objects.Tag
-        public async Task<List<Tag>> ReadAsync(List<string> address, ushort namespaceID)
+        public async Task<List<Tag>> ReadAsync(List<(string, ushort)> address)
         {
             List<Tag> tags = new List<Tag>();
             ReadValueIdCollection readValues = new ReadValueIdCollection();
-            readValues.AddRange(address.Select((string a) => new ReadValueId
+            readValues.AddRange(address.Select(((string, ushort) a) => new ReadValueId
             {
-                NodeId = new NodeId(a, namespaceID),
+                NodeId = new NodeId(a.Item1, a.Item2),
                 AttributeId = 13u
             }));
             ReadResponse dataValues = await _session!.ReadAsync(null, 0.0, TimestampsToReturn.Both, readValues, default(CancellationToken));
@@ -884,7 +897,7 @@ namespace OPCUaClient
             {
                 tags.Add(new Tag
                 {
-                    Address = address[i],
+                    Address = address[i].Item1,
                     Value = dataValues.Results[i].Value,
                     Code = dataValues.Results[i].StatusCode
                 });
